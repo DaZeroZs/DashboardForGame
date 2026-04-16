@@ -28,7 +28,7 @@ refresh_count = st_autorefresh(interval=REFRESH_INTERVAL_MS, key="dashboard_refr
 
 st.title("Security Competition Dashboard")
 st.caption(f"Auto-refresh every 10 seconds • Refresh count: {refresh_count}")
-st.caption(f"Reading results from: {RESULTS_URL}")
+#st.caption(f"Reading results from: {RESULTS_URL}")
 
 
 # ------------------------------------------------
