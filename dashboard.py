@@ -1,8 +1,7 @@
 import json
-import os
-from pathlib import Path
 
 import pandas as pd
+import requests
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
@@ -37,24 +36,26 @@ st.caption(f"Reading results from: {RESULTS_URL}")
 # ------------------------------------------------
 
 @st.cache_data(ttl=5)
-def load_results(path_str: str):
-    path = Path(path_str)
+def load_results():
     rows = []
 
-    if not path.exists():
+    try:
+        response = requests.get(RESULTS_URL, timeout=20)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        st.error(f"Failed to load results from GitHub: {e}")
         return pd.DataFrame(), pd.DataFrame()
 
-    with path.open("r", encoding="utf-8") as f:
-        for line_no, line in enumerate(f, start=1):
-            line = line.strip()
-            if not line:
-                continue
+    for line_no, line in enumerate(response.text.splitlines(), start=1):
+        line = line.strip()
+        if not line:
+            continue
 
-            try:
-                record = json.loads(line)
-                rows.append(record)
-            except json.JSONDecodeError:
-                st.warning(f"Skipping invalid JSON on line {line_no}")
+        try:
+            record = json.loads(line)
+            rows.append(record)
+        except json.JSONDecodeError:
+            st.warning(f"Skipping invalid JSON on line {line_no}")
 
     if not rows:
         return pd.DataFrame(), pd.DataFrame()
@@ -88,7 +89,7 @@ def load_results(path_str: str):
     return df, challenges_df
 
 
-df, challenges_df = load_results(str(RESULTS_FILE))
+df, challenges_df = load_results()
 
 if df.empty:
     st.warning("No results found yet.")
